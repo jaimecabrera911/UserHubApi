@@ -1,5 +1,4 @@
 using AutoMapper;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using UserHub.Context;
 using UserHub.Dto;
@@ -25,13 +24,18 @@ public class UserService(MyDbContext dbContext, IMapper mapper) : IUserService
         return mapper.Map<FindUserDto>(user);
     }
 
+
+    public FindUserDto GetUserByEmail(string email)
+    {
+        var user = dbContext.Users
+            .Include(user => user.Role)
+            .FirstOrDefault(user => user.Email == email) ?? throw new Exception("User not found");
+        return mapper.Map<FindUserDto>(user);
+    }
+
     public void CreateUser(CreateUserDto user)
     {
         var roleFound = dbContext.Roles.First(role => role.Name == user.Role);
-        var passwordHasher = new PasswordHasher<object>();
-
-        user.Password = passwordHasher.HashPassword(null!, user.Password);
-
         var userEntity = mapper.Map<User>(user);
         userEntity.Role = roleFound;
         userEntity.LastSessionDate = DateTime.Now ;
